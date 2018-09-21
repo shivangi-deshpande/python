@@ -1,0 +1,563 @@
+<%@page import="com.DAO.survey_DAO"%>
+<%@page import="java.util.Vector"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+     <script type='text/javascript' src='/OSMS/dwr/engine.js'></script>
+      <script type='text/javascript' src='/OSMS/dwr/interface/surveydwr.js'></script>
+    <script type='text/javascript' src='/OSMS/dwr/util.js'></script>
+    
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %> 
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %> 
+
+<c:set var="language" value="${not empty param.language ? param.language : not empty language ? language : pageContext.request.locale}" scope="session" /> 
+<fmt:setLocale value="${language}" /> 
+<fmt:setBundle basename="com.Properties.main" /> 
+
+    <html lang="${language}">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="0">
+    <jsp:include page="../surveydemo/header3.jsp"></jsp:include>
+    <jsp:include page="../surveydemo/myFooter.jsp"></jsp:include>
+ <head>
+     <title>Survey Management Systems</title>
+     <%
+String clientid=null;
+String type_id=null;
+int clientId=0;
+String name8=null;
+try
+{
+clientid=session.getAttribute("client_id").toString();
+type_id=session.getAttribute("role_id").toString();
+ clientId=Integer.parseInt(clientid);
+name8=session.getAttribute("name8").toString();
+}
+catch(Exception ex)
+{
+out.println(ex);
+}
+
+if(clientid==null)
+{
+    out.println(clientid);
+ response.sendRedirect("../login.jsp");
+}
+%> 
+ <%
+        String questionnaireid = request.getParameter("view_data1");
+      //  System.out.println("new ques id"+questionnaireid);
+      //  String clientid = request.getParameter("client_id");
+       // System.out.println("c id"+clientid);
+    %>
+    <script>
+        var user;
+//        var clientId='<=clientid%>';
+//        var questionnaireid='<=questionnaireid%>';
+    var flag=0;
+    var arr,arr1;
+    var i=0,k=1,l=6;
+    var clientId='<%=clientid%>';
+    var questionnaireid='<%=questionnaireid%>';
+    var no_of_question=0;
+    var button_flag=0;
+        window.onload=function onpageonload()       
+        {  
+            user='<%=name8%>';
+            $("#add_question_button").hide();
+//            $("#add_next_question_button").hide();
+            $("#view_added_question").append("<hr style='border-width: 3px;'><h2><b>Information Section</b></h2><hr style='border-width: 3px;'>");  
+            //view_full_questionnaire(1);
+           // var clientId="1";
+        surveydwr.getQuestionMasterData(questionnaireid,clientId,function(data)
+        {
+        button_flag=1;
+        var collection_data = data;           
+        if(collection_data !="")
+        {
+            arr = data;
+            i=0;
+            for(var o=0;o<=arr.length;o=o+8)
+            {     
+                addBodyQuestions();
+            }            
+        }
+        //addbodyq()
+        });
+    };
+ function bodyquestion()
+ {
+     surveydwr.getBodyQuestionMasterData(questionnaireid,clientId,function(data)
+            {  
+                button_flag=2;
+                $("#view_added_question").children().hide(); 
+                $("#add_next_question_button").hide();
+                 $("#add_question_button").show();
+                //alert(data);
+                if(data.length === 0)
+                {
+                    $("#add_next_question_button").hide();
+                    $("#add_question_button").hide();
+                    $("#button_div").append('<button type="button" id="add_head_ques" class="btn bg-light-green pull-right" onclick="onEndfun()">Back</button>');
+                }
+                
+                $("#view_added_question").append("<hr style='border-width: 3px;'><h2><b>Survey Section</b></h2><hr style='border-width: 3px;'>");
+                
+                var collection_data = data.toString();            
+                if(collection_data !="")
+                {   
+                    arr=null;                                    
+                    flag=0;
+                    k=1,l=6;
+                    arr = data;//collection_data.split(',');                                        
+                     i=0;                     
+                     while(k<l && k!=arr.length)
+                     {
+                         if(k!==arr.length && flag!=1)
+                         {
+                             //alert("k "+k+" length "+arr.length);
+                             addBodyQuestions();    
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    } 
+                }
+            });
+        }
+//Generating Link and QR-Code
+        function generateLinkAndQRCode()
+        {
+            var questionnaireid='<%=questionnaireid%>';
+
+            $("#questionnaire_title_id").val();
+            $("#published_link_expiry_date").val();
+            date = $("#published_link_expiry_date").val();
+            surveydwr.generateLinkAndQRCodedwr(date, questionnaireid, clientId, function(data){
+                $("#date_error").text(data);
+                if(data.localeCompare(" ")===0)
+                {
+                    $('#date_error').css('color', 'green');
+                    $("#date_error").text("Link and QR-Code generated");
+                    setTimeout(hideModal, 2000)
+                    window.open('updated_create_questionnaire.jsp','_self');
+                }
+            });
+        }
+
+        function hideModal()
+        {
+            $('#publish_questionnaire_model').modal('hide');
+        }
+
+
+
+    </script>        
+    
+    <script>
+            function addBodyQuestions()
+                    {   
+                        var question_id=arr[i];
+                        var question_text1=arr[i+1];
+                        var question_text2=arr[i+2];
+                        var opt1=arr[i+3];
+                        var opt2=arr[i+4];
+                        var no_of_options=arr[i+5];
+                        var type=arr[i+6];
+                        //alert("I "+i+" length"+arr.length);
+               
+    if(i!=arr.length && flag!=1)
+    {
+        //alert("nsde k "+k+" l "+l);
+        if(k<l && $("#div"+question_id).length == 0)
+        {
+            if(question_text2 !==" ") {
+        $("#view_added_question").append("<hr>");                    
+        $("#view_added_question").append("<div id='div"+question_id+"'>\
+                           <label for='radio"+question_id+"'><h4>"+question_text1+"  ("+question_text2+")</h4></label>");   
+                }else{
+                        $("#view_added_question").append("<hr>");                    
+                        $("#view_added_question").append("<div id='div"+question_id+"'>\
+                           <label for='radio"+question_id+"'><h4>"+question_text1+"</h4></label>");   
+                }
+                    k++;//alert(question_text1);
+            var x=i;
+            for(j=0;j<no_of_options;j++)
+            {   
+                //alert("op");
+                if(type==1)
+                {                                    
+                    $("#div"+question_id).append("<br>&nbsp &nbsp &nbsp <input name='group1' type='radio' id='"+question_id+"'  />\
+                                                <label for='"+question_id+"'>"+arr[x+3]+" ("+arr[x+4]+")</label>");                    
+                }
+                if(type==2)
+                {
+                    $("#div"+question_id).append("<br> &nbsp &nbsp &nbsp  <input type='checkbox' id='"+arr[x+3]+"'/>\
+                                    <label for='"+arr[x+3]+"'>"+arr[x+3]+" ("+arr[x+4]+")</label> &nbsp &nbsp" );
+                }
+                if(type==3)
+                {
+                    $("#div"+question_id).append("<br><input type='text' class='form-control' style='margin-left:30px;width:880px;margin-right:30px' /> &nbsp");
+                }
+                if(type==4)
+                {                                                                
+                    $("#div"+question_id).append("<br> &nbsp &nbsp &nbsp  <input name='groupyes' type='radio' id='yes'  />\
+                                                <label for='yes'>Yes</label>\
+                                    <input name='groupyes' type='radio' id='no'  />\<label for='no'>No</label>");                            
+                    break;
+                }                
+                if(type==5)
+                {                             
+                    $("#div"+question_id).append("<br> &nbsp &nbsp &nbsp <input name='grouptrue' type='radio' id='true'  />\
+                                                <label for='true'>True</label>\
+                                        <input name='grouptrue' type='radio' id='false' />\<label for='false'>False</label>");
+                    break;
+                }
+                //$("#view_added_question").append("<div id='div"+question_id+"'>"+arr[x+5]+"<br>"+arr[x+6]+"<br>"+"</div>");
+                x=x+8;              
+               // i=i+7;
+            }
+            $("#view_added_question").append("</div>");
+        }        
+    }
+    else
+    {
+        //alert("End Of Survey");
+        $("#add_question_button").hide(); 
+                    
+//$("#button_div").children().hide();
+//$("#add_next_question_button").show();
+if(button_flag==2 && flag==0)
+{
+    //alert("in");
+    //$("#add_next_question_button").hide();
+        surveydwr.getPublishedLinkDatadwr('<%=questionnaireid%>',function(data)
+        {
+            var splittedData = data.split(",");
+            
+            if(splittedData[0]!=='1')
+            {
+                $("#button_div").append('<button type="button" id="add_head_ques" class="btn bg-light-green pull-left" data-toggle="modal"  data-target="#publish_questionnaire_model">Publish</button>');
+            }
+        });
+        $("#button_div").append('<button type="button" id="add_head_ques" class="btn bg-light-green pull-right" onclick="onEndfun()">Back</button>');
+}
+else
+{
+    //alert("d"+button_flag+" "+flag);
+    $("#add_next_question_button").show();
+}
+        flag=1;
+    }
+//alert(arr[i+1]);
+i=i+8;
+}
+//Generating Link And QR-Code
+
+
+function onEndfun()
+{
+    //alert("End of Survey");
+    window.location.href="updated_create_questionnaire.jsp";
+}
+
+function addonButton()
+{            
+    $("#view_added_question").children().hide(); 
+    //$("#view_added_question").empty();    
+    l=l+5;
+    //alert(arr.length);
+    //for(o=0;o<5;o++)
+    while(k<l && k!=arr.length)
+    {
+        if(k!==arr.length && flag!=1)
+        {
+            //alert("k "+k+" length "+arr.length);
+            addBodyQuestions();    
+        }
+        else
+        {
+            break;
+        }
+    }    
+}
+</script>
+
+ </head>
+        <body class="theme-red">
+            <section class="content">
+                <ul class="pull-left"><h4><b>View Questionnaire</b></h4></ul>
+<!--                <ol class="breadcrumb breadcrumb-col-red pull-right">
+                <li><a href="#"><i class="material-icons">home</i>Home</a></li>
+                <li><a href="#"><i class="material-icons">settings</i>Pages</a></li>
+                <li class="active"><i class="material-icons">archive</i>Body Question</li>
+                </ol>-->
+                <div class="container-fluid">
+                    <div class="row clearfix">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="body">
+                                   
+                                <%--<jsp:include page="../common_resources/myHeaderMenu.jsp"></jsp:include>--%>
+<!--                                    <h3 class="card-inside-title">Body Question</h3> -->
+                                    <div id="view_added_question"></div>
+<!--                                    <div class="table-responsive">
+                                        <table id="bdt_table" class="table table-bordered table-striped table-hover">
+                                            
+                                            <tbody >
+                                                
+                                            </tbody>
+                                            
+                                        </table>
+                                    </div>-->
+                                <div class="row clearfix">
+<!--                                    <div class="demo-button" id="button_div">                                        
+                                        <button type="button" id="add_question_button" class="btn bg-light-green pull-right" onclick="addonButton()">
+                                            Next
+                                        </button>
+                                    </div>-->
+                                </div>
+                                    <div class="row clearfix">
+
+                                        <form id="add_question_form" name="add_question_form" method="post">                                           
+                                            <div class="col-md-12">                                                                                                                                                                                                
+
+                                            </div>
+                                           
+                                        </form>                                                    
+                                    </div>
+                                      <div class="row clearfix">
+                                          <div class="button-demo">
+                                              <div class="demo-button" id="button_div">                                        
+                                        <button type="button" id="add_question_button" class="btn bg-light-green pull-right" onclick="addonButton()">
+                                            Next
+                                        </button>
+                                                  <button type="button" id="add_next_question_button" class="btn bg-light-green pull-right" onclick="bodyquestion()">
+                                            Survey Section
+                                        </button>
+                                                  
+    
+                                    </div>
+<!--                                              <button type="button" class="btn bg-light-green pull-right" id="save_btn" onclick="addonButton()">
+                                                  Add
+                                              </button>                                                -->
+<!--                                              <button type="button" id="update_btn" class="btn bg-light-green pull-right" onclick="update_question()">
+                                                  Update
+                                              </button>
+                                              <button type="reset" id ="reset_btn"class="btn bg-grey pull-left" onclick="showSaveButton()">
+                                                  Reset
+                                              </button>
+                                              <button type="cancel" id="cancel_btn" class="btn bg-grey pull-left" onclick="reload()">
+                                                  Cancel
+                                              </button>-->
+                                          </div>
+                                      </div>        
+                                                    
+                                        
+<!--                                    </div>-->
+                                    
+                                </div>
+                                                        
+                                              <!-- view Question Options-->
+                          
+                                                                 
+                                              <form id="view_question_option" name="view_squestion_option" method="post">             
+                                        
+                                        <div class="modal fade" id="View_question_option" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                               
+                                                
+                                                <div class="modal-content">
+                                                    <div class="modal-header" id="deassign_post_from_div">
+                                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="resetDataOnModal(1)">&times;</button>
+                                                    </div>
+                                                    
+                                                    <div class="modal-body">
+                                                        <div class="footer">
+                                <div class="row clearfix">
+                                    <div class="col-lg-12">
+                                        <div class="body" id="deassign_post1">
+                                            <h2 class="card-inside-title"><b>Question Options</b></h2>
+                                            <div class="table-responsive">
+                                                <table id="bdt_table" class="table table-bordered table-striped table-hover">
+                                                    <thead id="folloupThead">
+                                                        <tr>
+                                                          <th style="text-align: center">Language 1</th>
+                                                         <th style="text-align: center">Language 2</th>
+                                                        </tr>
+                                                    </thead>
+                                                    
+                                                    <tbody id="question_option_body" name="question_option_body" >
+                                                        
+                                                    </tbody>    
+                                                </table>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                                                 
+                                                        
+                                                      
+                                                    <div class="modal-footer">
+                                                        <div class="button-demo">
+                                                            <button type="button" class="btn bg-grey pull-left" data-dismiss="modal" onclick="reload()">
+                                                        Close 
+                                                        </button>
+                                                            <button type="button" id="update_opt_btn" class="btn bg-light-green pull-right" onclick="update_options()">
+                                                  Update
+                                              </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                </div>
+                                            </div>                    
+                                        </div>
+                                        </div>
+                                        </div>
+                  
+                                    </form>  
+                                              <!-- End view Question Options-->
+                                              
+                                             
+                                              
+                                              
+                                              <!-- view Question -->
+                          
+                                                                 
+                                              <form id="view_question_form" name="view_question_form" method="post">             
+                                        
+                                        <div class="modal fade" id="View_question" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                               
+                                                
+                                                <div class="modal-content">
+                                                    <div class="modal-header" id="deassign_post_from_div">
+                                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" onclick="resetDataOnModal(1)">&times;</button>
+                                                    </div>
+                                                    
+                                                    <div class="modal-body">
+                                                        <div class="footer">
+                                <div class="row clearfix">
+                                    <div class="col-lg-12">
+                                        <div class="body" id="deassign_post1">
+                                            <h2 class="card-inside-title"><b>Question</b></h2>
+                                            <div class="table-responsive" id="view_question_div">
+<!--                                                <table id="bdt_table" class="table table-bordered table-striped table-hover">
+                                                    <thead id="folloupThead">
+                                                        <tr>
+                                                          <th style="text-align: center">Language 1</th>
+                                                         <th style="text-align: center">Language 2</th>
+                                                        </tr>
+                                                    </thead>
+                                                    
+                                                    <tbody id="view_question_body" name="view_question_body" >
+                                                        
+                                                    </tbody>    
+                                                </table>-->
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                                                 
+                                                        
+                                                      
+                                                    <div class="modal-footer">
+                                                        <div class="button-demo">
+                                                            <button type="button" class="btn bg-grey pull-left" data-dismiss="modal" onclick="reload()">
+                                                        Close 
+                                                        </button>
+<!--                                                            <button type="button" id="update_opt_btn" class="btn bg-light-green pull-right" onclick="update_options()">
+                                                  Update
+                                              </button>-->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                </div>
+                                            </div>                    
+                                        </div>
+                                        </div>
+                                        </div>
+                  
+                                    </form>  
+                                              <!-- End view Question-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+<!--share Link Start-->
+                        <div class="modal fade" id="publish_questionnaire_model" role="dialog" >
+                                <div class="modal-dialog" >
+
+                                    <!-- Modal content for add property-->
+                                    <div class="modal-content" >
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">Close</button>
+                                            <h4 class="modal-title">Share Questionnaire</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <%
+                                            String questionnaire_title =null;
+                                                     String no_of_questions = null;
+                                                 survey_DAO s=new survey_DAO();
+                                                 try{
+                                                     int view_data1 = Integer.parseInt(request.getParameter("view_data1"));
+                                                     Vector v1 = s.select_questionnaire_dao(clientid);                                                     
+                                                     int questionnaire_id = 0;        
+                                                     
+                                                     
+                                                         if (v1 != null && v1.size() != 0) {
+                                                             for (int i = 0; i < (v1.size() / 4); i++) {
+                                                                 
+                                                                questionnaire_id = Integer.parseInt(v1.get(i*4).toString());
+                                                                questionnaire_title = v1.get(i*4 +1).toString();
+                                                                no_of_questions = v1.get(i*4 + 2).toString();
+                                                                if(view_data1==questionnaire_id)
+                                                                    break;
+                                                             }
+                                                         }
+                                                 }
+                                                         catch(Exception e){}
+                                                             
+                                                %>
+                                            
+                                            <label>Questionnaire Title</label>
+                                            <div class="form-group">
+                                                <input type="text" class="form-control" name="questionnaire_title_id" id="questionnaire_title_id2" placeholder="Questionnaire Title" value="<%=questionnaire_title%>">
+                                                <span id="org_name_delete"></span>
+                                            </div>
+
+                                            <label>Number of Question</label>
+                                            <div class="form-group">
+                                                <input type="text" class="form-control" name="questionnaire_question_count_name" id="questionnaire_question_count_id2" value="<%=no_of_questions%>" placeholder="Number of Question">
+                                                <span id="contact_person_delete"></span>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Select Expiry Date</label>
+                                                <input type="text" class="datepicker form-control" name="published_link_expiry_date" id="published_link_expiry_date" placeholder="Select Date">
+                                                <span id="date_error" style="color: red"></span>
+                                            </div>
+                                                
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-primary col-lg-3 pull-right"  data-toggle="modal" onclick="generateLinkAndQRCode()" data-target="#mail_questionnaire_model" >Published</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>    
+                            </div>
+<!--End Share Link-->
+
+        <script src="../common_js/bdt_function_js/bdt_function.js"></script> 
+        <script src="../plugins/bootstrap-material-datetimepicker/js/bootstrap-material-datetimepicker.js"></script> 
+    </body>
+</html>
